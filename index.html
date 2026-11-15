@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <!-- ==========================================================
+       HEAD: informatie OVER de pagina (niet zichtbaar op de pagina zelf)
+       ========================================================== -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Noah Bruinsma | Rust in je bedrijf met slimme systemen</title>
+  <!-- De description is wat Google (en Sellbird!) als korte samenvatting leest -->
+  <meta name="description" content="Ik bouw overzichtelijke dashboards voor MKB-bedrijven die nu werken met losse Excel-lijsten, WhatsApp en papieren planningen. Plus AI-Spiegel: zie wat ChatGPT over jouw bedrijf zegt.">
+
+  <style>
+    /* ========================================================
+       CSS: hoe alles eruitziet (kleuren, lettertypes, ruimte)
+       ======================================================== */
+
+    /* Variabelen: kleuren één keer vastleggen, overal hergebruiken */
+    :root {
+      --donker: #14213d;
+      --accent: #2f9e7a;
+      --accent-licht: #e6f5ef;
+      --tekst: #2b2d33;
+      --grijs: #6b7280;
+      --achtergrond: #fafaf7;
+      --wit: #ffffff;
+      --rand: #e5e7eb;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--tekst);
+      background: var(--achtergrond);
+      line-height: 1.6;
+    }
+
+    /* .container houdt de inhoud in het midden met een maximale breedte */
+    .container { max-width: 1040px; margin: 0 auto; padding: 0 24px; }
+
+    /* ---------- Navigatie ---------- */
+    nav {
+      background: var(--wit);
+      border-bottom: 1px solid var(--rand);
+      position: sticky; top: 0; z-index: 10;
+    }
+    nav .container {
+      display: flex; justify-content: space-between; align-items: center;
+      height: 64px;
+    }
+    .logo { font-weight: 700; color: var(--donker); font-size: 1.1rem; text-decoration: none; }
+    .logo span { color: var(--accent); }
+    nav ul { display: flex; gap: 28px; list-style: none; }
+    nav a { color: var(--tekst); text-decoration: none; font-size: 0.95rem; }
+    nav a:hover { color: var(--accent); }
+
+    /* ---------- Hero (het grote blok bovenaan) ---------- */
+    .hero { padding: 96px 0 80px; }
+    .hero .label {
+      display: inline-block; background: var(--accent-licht); color: var(--accent);
+      padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600;
+      margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.15;
+      color: var(--donker); max-width: 760px; margin-bottom: 20px;
+    }
+    .hero p { font-size: 1.15rem; color: var(--grijs); max-width: 620px; margin-bottom: 32px; }
+
+    .knop {
+      display: inline-block; background: var(--accent); color: var(--wit);
+      padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;
+    }
+    .knop:hover { opacity: 0.9; }
+    .knop-rand {
+      background: transparent; color: var(--donker); border: 1px solid var(--rand); margin-left: 12px;
+    }
+
+    /* ---------- Secties algemeen ---------- */
+    section { padding: 72px 0; }
+    section.wit { background: var(--wit); border-top: 1px solid var(--rand); border-bottom: 1px solid var(--rand); }
+    h2 { font-size: 2rem; color: var(--donker); margin-bottom: 12px; }
+    .intro { color: var(--grijs); max-width: 640px; margin-bottom: 40px; font-size: 1.05rem; }
+
+    /* ---------- Kaartjes in een raster (grid) ---------- */
+    .raster { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .kaart {
+      background: var(--wit); border: 1px solid var(--rand); border-radius: 12px; padding: 24px;
+    }
+    section.wit .kaart { background: var(--achtergrond); }
+    .kaart h3 { color: var(--donker); margin-bottom: 8px; font-size: 1.1rem; }
+    .kaart p { color: var(--grijs); font-size: 0.97rem; }
+    .icoon { font-size: 1.6rem; margin-bottom: 12px; display: block; }
+
+    /* ---------- Voor / na vergelijking ---------- */
+    .voor-na { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .voor-na ul { list-style: none; }
+    .voor-na li { padding: 8px 0; border-bottom: 1px dashed var(--rand); }
+    .voor h3 { color: #b45309; }
+    .na h3 { color: var(--accent); }
+
+    /* ---------- Diensten ---------- */
+    .dienst {
+      background: var(--wit); border: 1px solid var(--rand); border-radius: 16px;
+      padding: 36px; margin-bottom: 24px;
+    }
+    .dienst .tag { color: var(--accent); font-weight: 700; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    .dienst h3 { font-size: 1.6rem; color: var(--donker); margin: 6px 0 12px; }
+    .dienst ul { margin: 16px 0 0 20px; }
+    .dienst li { margin-bottom: 6px; }
+
+    /* ---------- Stappen ---------- */
+    .stap-nummer {
+      display: inline-flex; width: 36px; height: 36px; border-radius: 50%;
+      background: var(--donker); color: var(--wit); align-items: center; justify-content: center;
+      font-weight: 700; margin-bottom: 12px;
+    }
+
+    /* ---------- Contact ---------- */
+    .contact { background: var(--donker); color: var(--wit); text-align: center; }
+    .contact h2 { color: var(--wit); }
+    .contact p { color: #c7cdd8; max-width: 560px; margin: 0 auto 28px; }
+
+    footer { text-align: center; padding: 24px; color: var(--grijs); font-size: 0.85rem; }
+
+    /* ---------- Mobiel: onder 700px breedte alles onder elkaar ---------- */
+    @media (max-width: 700px) {
+      nav ul { display: none; }
+      .voor-na { grid-template-columns: 1fr; }
+      .knop-rand { margin-left: 0; margin-top: 12px; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- ==========================================================
+       BODY: alles wat je op de pagina ZIET
+       ========================================================== -->
+
+  <!-- Navigatiebalk -->
+  <nav>
+    <div class="container">
+      <a href="#" class="logo">Noah <span>Bruinsma</span></a>
+      <ul>
+        <li><a href="#probleem">Herkenbaar?</a></li>
+        <li><a href="#diensten">Diensten</a></li>
+        <li><a href="#werkwijze">Werkwijze</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Hero: de eerste indruk -->
+  <header class="hero">
+    <div class="container">
+      <span class="label">Systemen voor het MKB</span>
+      <h1>Van losse lijstjes en WhatsApp-chaos naar één overzichtelijk dashboard.</h1>
+      <p>Ik bouw dashboards voor kleine bedrijven die nu werken met Excel, papieren planningen en tien verschillende apps. Eén plek waar je ziet hoe je bedrijf ervoor staat. Rust in de zaak.</p>
+      <a href="#contact" class="knop">Plan een gratis kennismaking</a>
+      <a href="#diensten" class="knop knop-rand">Bekijk de diensten</a>
+    </div>
+  </header>
+
+  <!-- Probleem: waar de klant zich in herkent -->
+  <section id="probleem" class="wit">
+    <div class="container">
+      <h2>Herken je dit?</h2>
+      <p class="intro">De meeste kleine bedrijven groeien sneller dan hun systemen. Wat begon als een handig Excel-bestand is nu een doolhof.</p>
+
+      <div class="voor-na">
+        <div class="kaart voor">
+          <h3>Nu</h3>
+          <ul>
+            <li>Klantgegevens in Excel, planning op papier, afspraken in WhatsApp</li>
+            <li>Elke week uren kwijt aan zoeken, overtypen en nabellen</li>
+            <li>Geen idee welke klanten de meeste omzet opleveren</li>
+            <li>Facturen en uren die tussen de wal en het schip vallen</li>
+            <li>Alles zit in het hoofd van de eigenaar</li>
+          </ul>
+        </div>
+        <div class="kaart na">
+          <h3>Met een dashboard</h3>
+          <ul>
+            <li>Klanten, planning en opdrachten op één plek</li>
+            <li>In één oogopslag zien wat er deze week moet gebeuren</li>
+            <li>Omzet, openstaande facturen en uren direct inzichtelijk</li>
+            <li>Werkt op laptop én telefoon, ook voor je medewerkers</li>
+            <li>Het bedrijf draait, ook als jij er even niet bent</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Voor wie -->
+  <section>
+    <div class="container">
+      <h2>Voor wie?</h2>
+      <p class="intro">Lokale bedrijven met 1 tot 25 medewerkers die veel met de hand regelen en zonder ingewikkelde software overzicht willen.</p>
+      <div class="raster">
+        <div class="kaart"><span class="icoon">🧽</span><h3>Schoonmaakbedrijven</h3><p>Vaste klanten, roosters, sleutels en uren in één overzicht.</p></div>
+        <div class="kaart"><span class="icoon">🔧</span><h3>Installateurs &amp; aannemers</h3><p>Opdrachten, materiaal, offertes en planning van je ploeg.</p></div>
+        <div class="kaart"><span class="icoon">💇</span><h3>Salons &amp; studio's</h3><p>Afspraken, vaste klanten en omzet per medewerker.</p></div>
+        <div class="kaart"><span class="icoon">🚚</span><h3>Bezorg- &amp; servicebedrijven</h3><p>Ritten, klanten en terugkerende opdrachten zonder gedoe.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Diensten: de twee producten -->
+  <section id="diensten" class="wit">
+    <div class="container">
+      <h2>Diensten</h2>
+      <p class="intro">Twee manieren waarop ik je bedrijf verder help. Altijd voor een vast, eenmalig bedrag: geen abonnementen.</p>
+
+      <div class="dienst">
+        <span class="tag">Dienst 1</span>
+        <h3>Dashboard op maat</h3>
+        <p>Ik breng in kaart hoe je nu werkt, en bouw één dashboard dat precies past bij jouw bedrijf. Geen standaardsoftware waar je je aan moet aanpassen, maar een systeem dat zich aanpast aan jou.</p>
+        <ul>
+          <li>Klanten, opdrachten en planning op één plek</li>
+          <li>Je bestaande Excel-lijsten worden netjes overgezet</li>
+          <li>Overzicht van omzet, uren en openstaande facturen</li>
+          <li>Uitleg aan jou en je team, zodat iedereen ermee kan werken</li>
+        </ul>
+      </div>
+
+      <div class="dienst">
+        <span class="tag">Dienst 2</span>
+        <h3>AI-Spiegel</h3>
+        <p>Steeds meer mensen vragen niet meer aan Google, maar aan ChatGPT: "Wat is een goed schoonmaakbedrijf in mijn buurt?" Maar wat antwoordt die AI eigenlijk over jouw bedrijf? AI-Spiegel laat het je zien.</p>
+        <ul>
+          <li>Een scan van wat AI-assistenten zoals ChatGPT over jouw bedrijf zeggen</li>
+          <li>Vergelijking met je concurrenten in de regio</li>
+          <li>Een helder rapport: wat klopt er, wat ontbreekt, wat is onjuist</li>
+          <li>Concrete tips om beter gevonden te worden door AI</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Werkwijze -->
+  <section id="werkwijze">
+    <div class="container">
+      <h2>Zo werkt het</h2>
+      <p class="intro">Persoonlijk, op locatie of op afstand. Jij hoeft geen verstand van techniek te hebben.</p>
+      <div class="raster">
+        <div class="kaart"><span class="stap-nummer">1</span><h3>Kennismaking</h3><p>Een gratis gesprek van 30 minuten. Je laat zien hoe je nu werkt en waar het knelt.</p></div>
+        <div class="kaart"><span class="stap-nummer">2</span><h3>Voorstel</h3><p>Je krijgt een duidelijk plan met één vaste prijs. Geen verrassingen achteraf.</p></div>
+        <div class="kaart"><span class="stap-nummer">3</span><h3>Bouwen</h3><p>Ik bouw je dashboard en laat tussendoor zien hoe het eruitziet.</p></div>
+        <div class="kaart"><span class="stap-nummer">4</span><h3>Opleveren</h3><p>Je team krijgt uitleg en je kunt meteen aan de slag.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="contact">
+    <div class="container">
+      <h2>Klaar voor rust in de zaak?</h2>
+      <p>Stuur een berichtje en we plannen een vrijblijvende kennismaking. Ik reageer binnen één werkdag.</p>
+      <!-- TODO: vervang dit e-mailadres door je eigen zakelijke adres -->
+      <a href="mailto:info@jouwdomein.nl" class="knop">Neem contact op</a>
+    </div>
+  </section>
+
+  <footer>
+    <!-- JavaScript zet hieronder automatisch het huidige jaartal neer -->
+    © <span id="jaar"></span> Noah Bruinsma · Systemen voor het MKB
+  </footer>
+
+  <script>
+    // ==========================================================
+    // JAVASCRIPT: maakt de pagina "slim". Hier alleen een klein voorbeeld:
+    // het jaartal in de footer wordt automatisch ingevuld.
+    // ==========================================================
+    document.getElementById("jaar").textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
