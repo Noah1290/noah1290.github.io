@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gratis AI-Spiegel scan | Kan AI jouw website lezen? | Noah Bruinsma</title>
+  <meta name="description" content="Gratis scan in 15 seconden: hoe goed kunnen ChatGPT, Google Gemini en andere AI-assistenten jouw bedrijfswebsite lezen? 12 controles, direct resultaat, met uitleg.">
+
+  <style>
+    /* Zelfde kleuren als index.html, zodat alles bij elkaar past */
+    :root {
+      --donker: #14213d; --accent: #2f9e7a; --accent-licht: #e6f5ef;
+      --tekst: #2b2d33; --grijs: #6b7280; --achtergrond: #fafaf7;
+      --wit: #ffffff; --rand: #e5e7eb;
+      --rood: #c2410c; --rood-licht: #fff1e8; --oranje: #b45309; --oranje-licht: #fef6e4;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+           color: var(--tekst); background: var(--achtergrond); line-height: 1.6; }
+    .container { max-width: 760px; margin: 0 auto; padding: 0 24px; }
+
+    nav { background: var(--wit); border-bottom: 1px solid var(--rand); }
+    nav .container { display: flex; justify-content: space-between; align-items: center; height: 64px; max-width: 1040px; }
+    .logo { font-weight: 700; color: var(--donker); font-size: 1.1rem; text-decoration: none; }
+    .logo span { color: var(--accent); }
+    nav a.terug { color: var(--tekst); text-decoration: none; font-size: 0.95rem; }
+
+    header { padding: 64px 0 24px; }
+    .label { display: inline-block; background: var(--accent-licht); color: var(--accent);
+             padding: 4px 12px; border-radius: 999px; font-size: 0.85rem; font-weight: 600; margin-bottom: 16px; }
+    h1 { font-size: clamp(1.8rem, 4.5vw, 2.6rem); line-height: 1.15; color: var(--donker); margin-bottom: 14px; }
+    .sub { font-size: 1.1rem; color: var(--grijs); margin-bottom: 28px; }
+
+    /* Het invulformulier */
+    .scanform { display: flex; gap: 10px; flex-wrap: wrap; }
+    input[type=text], input[type=email] {
+      flex: 1; min-width: 220px; padding: 14px 16px; font-size: 1rem;
+      border: 1px solid var(--rand); border-radius: 8px; background: var(--wit);
+    }
+    input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    button {
+      background: var(--accent); color: var(--wit); border: 0; border-radius: 8px;
+      padding: 14px 24px; font-size: 1rem; font-weight: 600; cursor: pointer;
+    }
+    button:disabled { opacity: 0.6; cursor: wait; }
+    .klein { font-size: 0.85rem; color: var(--grijs); margin-top: 10px; }
+
+    /* Resultaat */
+    #resultaat { padding: 16px 0 72px; }
+    .kaart { background: var(--wit); border: 1px solid var(--rand); border-radius: 12px; padding: 24px; margin-bottom: 16px; }
+    .score-blok { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .score { width: 112px; height: 112px; border-radius: 50%; display: flex; flex-direction: column;
+             align-items: center; justify-content: center; font-weight: 800; font-size: 2.2rem; color: var(--wit); flex-shrink: 0; }
+    .score small { font-size: 0.8rem; font-weight: 600; opacity: 0.9; }
+    .score-tekst h2 { color: var(--donker); font-size: 1.4rem; margin-bottom: 4px; }
+    .score-tekst p { color: var(--grijs); }
+
+    .check { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--rand); }
+    .check:last-child { border-bottom: 0; }
+    .check .icoon { font-size: 1.2rem; line-height: 1.5; }
+    .check .naam { font-weight: 600; color: var(--donker); }
+    .check .punten { color: var(--grijs); font-weight: 400; font-size: 0.9rem; }
+    .check .tip { color: var(--tekst); margin-top: 4px; font-size: 0.95rem; }
+    details { margin-top: 6px; font-size: 0.85rem; color: var(--grijs); }
+    summary { cursor: pointer; }
+    details p { margin-top: 4px; word-break: break-word; }
+
+    .melding { padding: 16px 18px; border-radius: 10px; margin-bottom: 16px; }
+    .melding.fout { background: var(--rood-licht); color: var(--rood); }
+    .melding.info { background: var(--oranje-licht); color: var(--oranje); }
+    .melding.goed { background: var(--accent-licht); color: var(--accent); }
+
+    /* Rapport aanvragen */
+    .aanvraag h3 { color: var(--donker); font-size: 1.25rem; margin-bottom: 6px; }
+    .aanvraag ul { margin: 10px 0 18px 20px; color: var(--tekst); }
+    .aanvraag form { display: grid; gap: 10px; }
+    .toestemming { display: flex; gap: 10px; align-items: flex-start; font-size: 0.92rem; }
+    .toestemming input { margin-top: 4px; width: 18px; height: 18px; flex-shrink: 0; }
+    .verborgen { position: absolute; left: -9999px; }   /* honeypot tegen spam-bots */
+    a { color: var(--accent); }
+
+    .cadeau { border: 2px solid var(--accent); background: var(--accent-licht); }
+    .cadeau h3 { color: var(--donker); font-size: 1.25rem; margin-bottom: 6px; }
+    .cadeau p { margin-bottom: 10px; }
+    .cadeau pre { background: var(--wit); border: 1px solid var(--rand); border-radius: 8px; padding: 14px;
+                  font-size: 0.82rem; white-space: pre-wrap; max-height: 260px; overflow: auto; margin: 8px 0 14px; }
+    .knop-rand { background: var(--wit); color: var(--donker); border: 1px solid var(--rand); margin-left: 8px; }
+
+    .aicheck { border: 2px solid var(--donker); }
+    .aicheck h3 { color: var(--donker); font-size: 1.25rem; margin-bottom: 6px; }
+    .aicheck .velden { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; margin: 14px 0 10px; }
+    .aicheck .velden label { font-size: 0.8rem; color: var(--grijs); display: grid; gap: 4px; }
+    .aicheck .velden input { min-width: 0; padding: 10px 12px; }
+    .ai-raster { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+    .ai-kaart { border: 1px solid var(--rand); border-radius: 10px; padding: 14px; background: var(--achtergrond); }
+    .ai-kaart .kop { font-weight: 700; color: var(--donker); margin-bottom: 4px; }
+    .ai-kaart .uitslag { font-weight: 600; margin-bottom: 8px; }
+    .ai-kaart ol { margin-left: 18px; font-size: 0.9rem; }
+    .ai-kaart li.jij { font-weight: 700; color: var(--accent); }
+    .ai-samenvatting { margin-top: 16px; padding: 14px 16px; border-radius: 10px; }
+    @media (max-width: 700px) { .aicheck .velden, .ai-raster { grid-template-columns: 1fr; } }
+
+    .uitleg { color: var(--grijs); font-size: 0.92rem; }
+    .uitleg h3 { color: var(--donker); font-size: 1.05rem; margin-bottom: 6px; }
+
+    .laden { display: flex; align-items: center; gap: 12px; color: var(--grijs); }
+    .draai { width: 22px; height: 22px; border: 3px solid var(--rand); border-top-color: var(--accent);
+             border-radius: 50%; animation: draai 0.8s linear infinite; }
+    @keyframes draai { to { transform: rotate(360deg); } }
+
+    footer { text-align: center; padding: 24px; color: var(--grijs); font-size: 0.85rem; }
+  </style>
+</head>
+
+<body>
+  <nav>
+    <div class="container">
+      <a href="index.html" class="logo">Noah <span>Bruinsma</span></a>
+      <a href="index.html" class="terug">← Terug naar home</a>
+    </div>
+  </nav>
+
+  <header>
+    <div class="container">
+      <span class="label">Gratis · 15 seconden · Geen account nodig</span>
+      <h1>Kan AI jouw website lezen?</h1>
+      <p class="sub">Steeds meer klanten vragen ChatGPT of Google Gemini om "een goede kapper in de buurt". Die AI-assistenten kunnen jou alleen aanbevelen als ze je website goed kunnen lezen. Deze scan controleert in 12 punten hoe goed dat lukt, en vraagt live aan ChatGPT, Gemini en Claude of ze jouw bedrijf aanraden.</p>
+
+      <form class="scanform" id="scanform">
+        <input type="text" id="website" placeholder="jouwbedrijf.nl" autocomplete="url" inputmode="url" required>
+        <button type="submit" id="scanknop">Scan mijn website</button>
+      </form>
+      <p class="klein">We bekijken alleen je openbare homepage, net zoals een zoekmachine dat doet.</p>
+    </div>
+  </header>
+
+  <main id="resultaat" class="container" aria-live="polite"></main>
+
+  <section class="container" style="padding-bottom:56px">
+    <div class="kaart uitleg">
+      <h3>Wat controleert de scan wel en niet?</h3>
+      <p><strong>De websitescan</strong> kijkt in 12 punten of je website technisch goed leesbaar is voor AI-assistenten en zoekmachines: of ze toegang hebben, of je bedrijfsgegevens herkenbaar zijn, of je titel en omschrijving zeggen wat je doet en waar, en meer. Kon iets niet betrouwbaar gecontroleerd worden, dan zie je ⚪ en telt het niet mee in je score.</p>
+      <p style="margin-top:8px"><strong>De AI-check</strong> stelt ChatGPT, Google Gemini en Claude live de vraag die je klanten ook stellen, met zoeken op internet aan. Je ziet of je bedrijf genoemd wordt en welke bedrijven wel. AI-antwoorden verschillen per keer en per persoon, dus het is een momentopname.</p>
+    </div>
+  </section>
+
+  <footer>© <span id="jaar"></span> Noah Bruinsma · <a href="privacy.html">Privacy</a></footer>
+
+  <script>
+    // ==========================================================
+    // INSTELLING: het adres van je Cloudflare Worker.
+    // Na het aanmaken van de Worker zie je dit adres in Cloudflare.
+    // Plak het hieronder, zonder / aan het eind.
+    // ==========================================================
+    const WORKER_URL = "https://ai-spiegel.noah-fc5.workers.dev";
+
+    document.getElementById("jaar").textContent = new Date().getFullYear();
+    const vak = document.getElementById("resultaat");
+    let laatsteScan = null;
+
+    // Tekst veilig in HTML zetten (voorkomt dat iemand code in je pagina krijgt)
+    function esc(s) {
+      return String(s ?? "").replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function kleur(score) {
+      if (score >= 70) return "var(--accent)";
+      if (score >= 40) return "#d97706";
+      return "#c2410c";
+    }
+    function oordeel(score) {
+      if (score >= 70) return ["Goed leesbaar voor AI", "Je website is technisch goed op orde. Er zijn nog een paar puntjes om het af te maken."];
+      if (score >= 40) return ["Redelijk, maar AI mist dingen", "AI-assistenten kunnen je site lezen, maar missen belangrijke informatie om je aan te bevelen."];
+      return ["AI kan je slecht lezen", "De kans is klein dat een AI-assistent jouw bedrijf noemt. Het goede nieuws: de meeste punten zijn snel op te lossen."];
+    }
+    const ICOON = { ja: "✅", nee: "❌", onbekend: "⚪" };
+
+    document.getElementById("scanform").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const website = document.getElementById("website").value.trim();
+      if (!website) return;
+      const knop = document.getElementById("scanknop");
+      knop.disabled = true;
+      vak.innerHTML = `<div class="kaart laden"><div class="draai"></div>Bezig met scannen van ${esc(website)}… dit duurt meestal 5 tot 15 seconden.</div>`;
+      try {
+        const r = await fetch(WORKER_URL + "/scan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ website }),
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.fout || "De scan lukte niet.");
+        laatsteScan = data;
+        toonResultaat(data);
+      } catch (err) {
+        vak.innerHTML = `<div class="melding fout">${esc(err.message || "De scan lukte niet. Probeer het zo nog eens.")}</div>`;
+      } finally {
+        knop.disabled = false;
+      }
+    });
+
+    function toonResultaat(d) {
+      if (d.geen_eigen_site) {
+        vak.innerHTML = `<div class="melding info"><strong>Dit is geen eigen website.</strong><br>
+          ${esc(d.website)} is een gids, boekingssite of social-mediapagina. AI-assistenten halen informatie het liefst van een eigen bedrijfswebsite.
+          Heb je die niet? Dan is dat precies het eerste wat je kunt verbeteren.</div>` + aanvraagHtml(d);
+        koppelAanvraag();
+        return;
+      }
+      if (d.fout) {
+        vak.innerHTML = `<div class="melding fout">${esc(d.fout)} Klopt het adres? Probeer het eventueel met of zonder "www.".</div>`;
+        return;
+      }
+      const [titel, uitleg] = oordeel(d.score);
+      const checks = d.checks.map(c => `
+        <div class="check">
+          <div class="icoon">${ICOON[c.status] || "⚪"}</div>
+          <div>
+            <div class="naam">${esc(c.naam)} <span class="punten">${c.status === "onbekend" ? "niet meegeteld" : `${c.punten}/${c.maximum}`}</span></div>
+            ${c.tip ? `<div class="tip">${esc(c.tip)}</div>` : ""}
+            <details><summary>Wat zag de scan?</summary><p>${esc(c.bewijs)}</p></details>
+          </div>
+        </div>`).join("");
+      const onbekendNoot = d.aantal_onbekend
+        ? `<p class="klein">⚪ ${d.aantal_onbekend} onderdeel/onderdelen kon de scan niet betrouwbaar controleren. Die tellen niet mee in je score.</p>` : "";
+      vak.innerHTML = `
+        <div class="kaart score-blok">
+          <div class="score" style="background:${kleur(d.score)}">${d.score}<small>van 100</small></div>
+          <div class="score-tekst"><h2>${esc(titel)}</h2><p>${esc(uitleg)}</p>
+            <p class="klein">${esc(d.website)} · gescand op ${esc(d.gecontroleerd_op)}</p></div>
+        </div>
+        ${aiCheckHtml(d)}
+        <div class="kaart">${checks}${onbekendNoot}</div>
+        ${cadeauHtml(d)}
+        ${aanvraagHtml(d)}`;
+      koppelAiCheck(d);
+      koppelCadeau(d);
+      koppelAanvraag();
+    }
+
+    // 🤖 Live AI-check: wordt dit bedrijf aanbevolen door ChatGPT, Gemini en Claude?
+    let laatsteAi = "";
+    function aiCheckHtml(d) {
+      return `
+        <div class="kaart aicheck" id="aicheck">
+          <h3>🤖 Wordt jouw bedrijf aanbevolen door AI?</h3>
+          <p>We stellen ChatGPT, Google Gemini en Claude live dezelfde vraag als je klanten: <em>"Ik zoek een goede ${esc(d.branche || "…")} in ${esc(d.plaats || "…")}. Welke bedrijven raad je aan?"</em> Klopt het hieronder niet? Pas het aan.</p>
+          <form id="aiform">
+            <div class="velden">
+              <label>Bedrijfsnaam<input type="text" id="ai_naam" value="${esc(d.naam || "")}" required></label>
+              <label>Wat voor bedrijf<input type="text" id="ai_branche" value="${esc(d.branche || "")}" placeholder="bijv. kapper" required></label>
+              <label>Plaats<input type="text" id="ai_plaats" value="${esc(d.plaats || "")}" placeholder="bijv. Utrecht" required></label>
+            </div>
+            <button type="submit" id="aiknop">Vraag het aan de AI's</button>
+            <span class="klein" style="margin-left:8px">Duurt meestal 20 tot 40 seconden.</span>
+          </form>
+          <div id="aiuitslag"></div>
+        </div>`;
+    }
+
+    function koppelAiCheck(d) {
+      const form = document.getElementById("aiform");
+      if (!form) return;
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const knop = document.getElementById("aiknop");
+        const vak2 = document.getElementById("aiuitslag");
+        knop.disabled = true;
+        vak2.innerHTML = `<div class="laden" style="margin-top:14px"><div class="draai"></div>ChatGPT, Gemini en Claude zoeken het nu voor je uit…</div>`;
+        try {
+          const r = await fetch(WORKER_URL + "/ai-check", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              naam: document.getElementById("ai_naam").value,
+              branche: document.getElementById("ai_branche").value,
+              plaats: document.getElementById("ai_plaats").value,
+              website: d.website,
+            }),
+          });
+          const a = await r.json();
+          if (!r.ok) throw new Error(a.fout || "De AI-check lukte niet.");
+          vak2.innerHTML = aiUitslagHtml(a);
+          laatsteAi = a.resultaten.map(x => `${x.naam}: ${x.status === "genoemd" ? "genoemd" : x.status === "niet_genoemd" ? "niet genoemd" : "onbekend"}`).join("; ");
+        } catch (err) {
+          vak2.innerHTML = `<div class="melding fout" style="margin-top:14px">${esc(err.message)}</div>`;
+        } finally {
+          knop.disabled = false;
+        }
+      });
+    }
+
+    function aiUitslagHtml(a) {
+      const UITSLAG = {
+        genoemd: ["✅", "Je wordt genoemd", "var(--accent)"],
+        niet_genoemd: ["❌", "Je wordt niet genoemd", "var(--rood)"],
+        onbekend: ["⚪", "Kon niet worden gecontroleerd", "var(--grijs)"],
+      };
+      const kaarten = a.resultaten.map(x => {
+        const [icoon, tekst, kleur] = UITSLAG[x.status] || UITSLAG.onbekend;
+        const lijst = (x.bedrijven || []).length
+          ? `<div class="klein">Aanbevolen:</div><ol>${x.bedrijven.map(b => `<li class="${b.jij ? "jij" : ""}">${esc(b.naam)}${b.jij ? " (jij)" : ""}</li>`).join("")}</ol>`
+          : (x.status === "onbekend" ? `<div class="klein">${esc(x.reden || "")}</div>` : `<div class="klein">Geen bedrijven genoemd.</div>`);
+        return `<div class="ai-kaart"><div class="kop">${esc(x.naam)}</div>
+          <div class="uitslag" style="color:${kleur}">${icoon} ${tekst}</div>${lijst}</div>`;
+      }).join("");
+
+      const gecontroleerd = a.resultaten.filter(x => x.status !== "onbekend");
+      const genoemd = gecontroleerd.filter(x => x.status === "genoemd").length;
+      const concurrenten = [...new Set(gecontroleerd.flatMap(x => (x.bedrijven || []).filter(b => !b.jij).map(b => b.naam)))].slice(0, 5);
+      let samenvatting = "";
+      if (gecontroleerd.length) {
+        samenvatting = genoemd === 0
+          ? `<div class="ai-samenvatting melding fout"><strong>Geen van de ${gecontroleerd.length} AI-assistenten noemt jouw bedrijf.</strong>${concurrenten.length ? ` Wel genoemd: ${concurrenten.map(esc).join(", ")}.` : ""} Klanten die het aan AI vragen, krijgen hen te zien en niet jou.</div>`
+          : genoemd < gecontroleerd.length
+            ? `<div class="ai-samenvatting melding info"><strong>Je wordt door ${genoemd} van de ${gecontroleerd.length} AI-assistenten genoemd.</strong> Bij de andere ga je de klant mis.</div>`
+            : `<div class="ai-samenvatting melding goed"><strong>Alle ${gecontroleerd.length} AI-assistenten noemen je bedrijf.</strong> Mooi! Met de punten hieronder houd je die plek vast.</div>`;
+      }
+      return `<div class="ai-raster">${kaarten}</div>${samenvatting}
+        <p class="klein">AI-antwoorden verschillen per keer en per persoon. Dit is een momentopname van ${esc(a.gecontroleerd_op)}, met zoeken op internet aan, zoals in de echte apps.</p>`;
+    }
+
+    // 🎁 Het gratis cadeau: een persoonlijke llms.txt, gemaakt uit wat de scan vond.
+    function cadeauHtml(d) {
+      if (!d.cadeau) return "";
+      return `
+        <div class="kaart cadeau">
+          <h3>🎁 Gratis voor jou: je persoonlijke llms.txt</h3>
+          <p>Met dit bestand vertel je AI-assistenten in gewone taal wie je bent en wat je doet. Wat we op je website vonden, hebben we al ingevuld. Vul de plekken met <strong>[VUL IN]</strong> aan en zet het bestand op je website, of stuur het naar je webbouwer.</p>
+          <details><summary>Bekijk je llms.txt</summary><pre>${esc(d.cadeau.inhoud)}</pre></details>
+          <p style="margin-top:12px">
+            <button type="button" id="cadeauDownload">Download llms.txt</button>
+            <button type="button" id="cadeauKopie" class="knop-rand">Kopieer tekst</button>
+          </p>
+          <p class="klein">Liever dat ik het invul en op je site zet? Vraag hieronder het volledige rapport aan.</p>
+        </div>`;
+    }
+
+    function koppelCadeau(d) {
+      if (!d.cadeau) return;
+      document.getElementById("cadeauDownload").addEventListener("click", () => {
+        const blob = new Blob([d.cadeau.inhoud], { type: "text/plain;charset=utf-8" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = d.cadeau.bestandsnaam || "llms.txt";
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      });
+      document.getElementById("cadeauKopie").addEventListener("click", async (e) => {
+        try { await navigator.clipboard.writeText(d.cadeau.inhoud); e.target.textContent = "Gekopieerd ✓"; }
+        catch { e.target.textContent = "Kopiëren lukte niet"; }
+      });
+    }
+
+    function aanvraagHtml(d) {
+      return `
+        <div class="kaart aanvraag" id="aanvraag">
+          <h3>Wil je dit laten oplossen?</h3>
+          <p>Ik stuur je gratis het volledige rapport, met:</p>
+          <ul>
+            <li>per punt wat er mis is en wat het je kost aan klanten</li>
+            <li>hoeveel werk het is om op te lossen</li>
+            <li>een vaste prijs als ik het voor je regel (geen verplichting)</li>
+            <li>laat je het mij doen, dan krijg je na 30 dagen een gratis herscan, zodat je ziet dat het werkt</li>
+          </ul>
+          <form id="aanvraagform">
+            <input type="text" id="naam" placeholder="Je naam" autocomplete="name" required>
+            <input type="email" id="email" placeholder="Je e-mailadres" autocomplete="email" required>
+            <input type="text" id="extra_veld" class="verborgen" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <label class="toestemming">
+              <input type="checkbox" id="toestemming" required>
+              <span>Ja, stuur mij het volledige rapport per e-mail. Noah mag mij daarover één keer opvolgen. Ik kan me altijd afmelden. Lees de <a href="privacy.html" target="_blank">privacyverklaring</a>.</span>
+            </label>
+            <button type="submit" id="aanvraagknop">Stuur mij het rapport</button>
+          </form>
+        </div>`;
+    }
+
+    function koppelAanvraag() {
+      const form = document.getElementById("aanvraagform");
+      if (!form) return;
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const knop = document.getElementById("aanvraagknop");
+        knop.disabled = true;
+        try {
+          const r = await fetch(WORKER_URL + "/lead", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              naam: document.getElementById("naam").value,
+              email: document.getElementById("email").value,
+              website: laatsteScan ? laatsteScan.website : document.getElementById("website").value,
+              score: laatsteScan && !laatsteScan.geen_eigen_site ? laatsteScan.score : null,
+              ai: laatsteAi,
+              toestemming: document.getElementById("toestemming").checked,
+              extra_veld: document.getElementById("extra_veld").value,
+            }),
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.fout || "Versturen lukte niet.");
+          document.getElementById("aanvraag").innerHTML =
+            `<div class="melding goed"><strong>Bedankt!</strong> Je ontvangt het volledige rapport binnen twee werkdagen in je mailbox.</div>`;
+        } catch (err) {
+          knop.disabled = false;
+          alert(err.message || "Versturen lukte niet. Probeer het nog eens.");
+        }
+      });
+    }
+  </script>
+</body>
+</html>
