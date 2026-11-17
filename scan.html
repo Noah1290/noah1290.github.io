@@ -245,7 +245,7 @@
       return `
         <div class="kaart aicheck" id="aicheck">
           <h3>🤖 Wordt jouw bedrijf aanbevolen door AI?</h3>
-          <p>We stellen ChatGPT, Google Gemini en Claude live dezelfde vraag als je klanten: <em>"Ik zoek een goede ${esc(d.branche || "…")} in ${esc(d.plaats || "…")}. Welke bedrijven raad je aan?"</em> Klopt het hieronder niet? Pas het aan.</p>
+          <p>We stellen ChatGPT, Google Gemini en Claude live dezelfde vraag als je klanten: <em id="ai_vraagzin">${vraagzin(d.branche, d.plaats)}</em> Klopt het hieronder niet? Pas het aan.</p>
           <form id="aiform">
             <div class="velden">
               <label>Bedrijfsnaam<input type="text" id="ai_naam" value="${esc(d.naam || "")}" required></label>
@@ -259,9 +259,22 @@
         </div>`;
     }
 
+    function vraagzin(branche, plaats) {
+      const b = (branche || "").trim(), p = (plaats || "").trim();
+      const goed = /(bedrijf|kantoor|restaurant|café|cafe|bureau|atelier|centrum|hotel|instituut|huis)$/i.test(b) ? "goed" : "goede";
+      return `"Ik zoek een ${goed} ${b ? esc(b) : "<u>[vul hieronder in]</u>"} in ${p ? esc(p) : "<u>[vul hieronder in]</u>"}. Welke bedrijven raad je aan?"`;
+    }
+
     function koppelAiCheck(d) {
       const form = document.getElementById("aiform");
       if (!form) return;
+      // De vraag bovenaan loopt live mee met wat je invult.
+      const bijwerken = () => {
+        document.getElementById("ai_vraagzin").innerHTML =
+          vraagzin(document.getElementById("ai_branche").value, document.getElementById("ai_plaats").value);
+      };
+      document.getElementById("ai_branche").addEventListener("input", bijwerken);
+      document.getElementById("ai_plaats").addEventListener("input", bijwerken);
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const knop = document.getElementById("aiknop");
@@ -310,12 +323,17 @@
       const genoemd = gecontroleerd.filter(x => x.status === "genoemd").length;
       const concurrenten = [...new Set(gecontroleerd.flatMap(x => (x.bedrijven || []).filter(b => !b.jij).map(b => b.naam)))].slice(0, 5);
       let samenvatting = "";
-      if (gecontroleerd.length) {
-        samenvatting = genoemd === 0
-          ? `<div class="ai-samenvatting melding fout"><strong>Geen van de ${gecontroleerd.length} AI-assistenten noemt jouw bedrijf.</strong>${concurrenten.length ? ` Wel genoemd: ${concurrenten.map(esc).join(", ")}.` : ""} Klanten die het aan AI vragen, krijgen hen te zien en niet jou.</div>`
-          : genoemd < gecontroleerd.length
-            ? `<div class="ai-samenvatting melding info"><strong>Je wordt door ${genoemd} van de ${gecontroleerd.length} AI-assistenten genoemd.</strong> Bij de andere ga je de klant mis.</div>`
-            : `<div class="ai-samenvatting melding goed"><strong>Alle ${gecontroleerd.length} AI-assistenten noemen je bedrijf.</strong> Mooi! Met de punten hieronder houd je die plek vast.</div>`;
+      const n = gecontroleerd.length;
+      const wie = n === 1 ? gecontroleerd[0].naam : `${n} AI-assistenten`;
+      const wel = concurrenten.length ? ` Wel genoemd: ${concurrenten.map(esc).join(", ")}.` : "";
+      if (n) {
+        if (genoemd === 0) {
+          samenvatting = `<div class="ai-samenvatting melding fout"><strong>${n === 1 ? `${esc(wie)} noemt jouw bedrijf niet.` : `Geen van de ${n} AI-assistenten noemt jouw bedrijf.`}</strong>${wel} Klanten die het aan AI vragen, krijgen hen te zien en niet jou.</div>`;
+        } else if (genoemd < n) {
+          samenvatting = `<div class="ai-samenvatting melding info"><strong>Je wordt door ${genoemd} van de ${n} AI-assistenten genoemd.</strong> Bij de andere ga je de klant mis.</div>`;
+        } else {
+          samenvatting = `<div class="ai-samenvatting melding goed"><strong>${n === 1 ? `${esc(wie)} noemt je bedrijf.` : `Alle ${n} AI-assistenten noemen je bedrijf.`}</strong> Mooi! Met de punten hieronder houd je die plek vast.</div>`;
+        }
       }
       return `<div class="ai-raster">${kaarten}</div>${samenvatting}
         <p class="klein">AI-antwoorden verschillen per keer en per persoon. Dit is een momentopname van ${esc(a.gecontroleerd_op)}, met zoeken op internet aan, zoals in de echte apps.</p>`;
