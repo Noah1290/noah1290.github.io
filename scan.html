@@ -91,6 +91,14 @@
     .aicheck .velden { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; margin: 14px 0 10px; }
     .aicheck .velden label { font-size: 0.8rem; color: var(--grijs); display: grid; gap: 4px; }
     .aicheck .velden input { min-width: 0; padding: 10px 12px; }
+    .naamregel { display: grid; gap: 4px; font-size: 0.8rem; color: var(--grijs); margin: 14px 0 10px; max-width: 360px; }
+    .naamregel input { padding: 10px 12px; }
+    .vragen { display: grid; gap: 8px; margin-bottom: 12px; }
+    .vraagregel { display: flex; gap: 10px; align-items: center; }
+    .vraagregel input[type=checkbox] { width: 18px; height: 18px; flex-shrink: 0; }
+    .vraagregel input[type=text] { padding: 10px 12px; font-size: 0.95rem; }
+    .ai-vraagblok { margin-top: 18px; }
+    .ai-vraag { font-weight: 600; color: var(--donker); font-style: italic; }
     .ai-raster { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
     .ai-kaart { border: 1px solid var(--rand); border-radius: 10px; padding: 14px; background: var(--achtergrond); }
     .ai-kaart .kop { font-weight: 700; color: var(--donker); margin-bottom: 4px; }
@@ -255,64 +263,67 @@
       koppelAanvraag();
     }
 
-    // 🤖 Live AI-check: wordt dit bedrijf aanbevolen door ChatGPT, Gemini en Claude?
+    // 🤖 Live AI-check: we stellen de AI's de vragen die júist deze klanten stellen.
+    // Een kapper: "een goede kapper in Rotterdam". Een landelijk adviesbureau: een vraag over hun vak, zonder plaats.
     let laatsteAi = "", laatsteAiDetail = null;
+    const GOED = /(bedrijf|kantoor|restaurant|café|cafe|bureau|atelier|centrum|hotel|instituut|huis)$/i;
+    function standaardVragen(d) {
+      if ((d.vragen || []).length) return d.vragen.slice(0, 3);
+      const b = (d.branche || "").trim(), p = (d.plaats || "").trim();
+      if (!b) return [""];
+      const g = GOED.test(b) ? "goed" : "goede";
+      return [p ? `Ik zoek een ${g} ${b} in ${p}. Welke bedrijven raad je aan?` : `Ik zoek een ${g} ${b}. Welke bedrijven raad je aan?`];
+    }
+
     function aiCheckHtml(d) {
+      const vragen = standaardVragen(d);
+      while (vragen.length < 3) vragen.push("");
+      const velden = vragen.map((v, i) => `
+        <label class="vraagregel">
+          <input type="checkbox" class="ai_aan" ${v ? "checked" : ""}>
+          <input type="text" class="ai_vraag" value="${esc(v)}" placeholder="${i === 0 ? "Typ een vraag die je klanten aan AI zouden stellen" : "Nog een vraag (optioneel)"}" maxlength="200">
+        </label>`).join("");
       return `
         <div class="kaart aicheck" id="aicheck">
           <h3>🤖 Wordt jouw bedrijf aanbevolen door AI?</h3>
-          <p>We stellen ChatGPT, Google Gemini en Claude live dezelfde vraag als je klanten: <em id="ai_vraagzin">${vraagzin(d.branche, d.plaats)}</em> Klopt het hieronder niet? Pas het aan.</p>
+          <p>We stellen ChatGPT, Google Gemini en Claude live de vragen die jouw klanten stellen. We hebben ze alvast bedacht op basis van je website. Kloppen ze niet? Pas ze gerust aan.</p>
           <form id="aiform">
-            <div class="velden">
-              <label>Bedrijfsnaam<input type="text" id="ai_naam" value="${esc(d.naam || "")}" required></label>
-              <label>Wat voor bedrijf<input type="text" id="ai_branche" value="${esc(d.branche || "")}" placeholder="bijv. kapper" required></label>
-              <label>Plaats<input type="text" id="ai_plaats" value="${esc(d.plaats || "")}" placeholder="bijv. Utrecht" required></label>
-            </div>
+            <label class="naamregel">Bedrijfsnaam<input type="text" id="ai_naam" value="${esc(d.naam || "")}" required></label>
+            <div class="vragen">${velden}</div>
             <button type="submit" id="aiknop">Vraag het aan de AI's</button>
-            <span class="klein" style="margin-left:8px">Duurt meestal 20 tot 40 seconden.</span>
+            <span class="klein" style="margin-left:8px">Duurt meestal 30 tot 60 seconden.</span>
           </form>
           <div id="aiuitslag"></div>
         </div>`;
     }
 
-    function vraagzin(branche, plaats) {
-      const b = (branche || "").trim(), p = (plaats || "").trim();
-      const goed = /(bedrijf|kantoor|restaurant|café|cafe|bureau|atelier|centrum|hotel|instituut|huis)$/i.test(b) ? "goed" : "goede";
-      return `"Ik zoek een ${goed} ${b ? esc(b) : "<u>[vul hieronder in]</u>"} in ${p ? esc(p) : "<u>[vul hieronder in]</u>"}. Welke bedrijven raad je aan?"`;
-    }
-
     function koppelAiCheck(d) {
       const form = document.getElementById("aiform");
       if (!form) return;
-      // De vraag bovenaan loopt live mee met wat je invult.
-      const bijwerken = () => {
-        document.getElementById("ai_vraagzin").innerHTML =
-          vraagzin(document.getElementById("ai_branche").value, document.getElementById("ai_plaats").value);
-      };
-      document.getElementById("ai_branche").addEventListener("input", bijwerken);
-      document.getElementById("ai_plaats").addEventListener("input", bijwerken);
+      // Typ je in een leeg vraagveld, dan gaat het vinkje vanzelf aan.
+      form.querySelectorAll(".ai_vraag").forEach((veld, i) => veld.addEventListener("input", () => {
+        form.querySelectorAll(".ai_aan")[i].checked = veld.value.trim().length > 0;
+      }));
       form.addEventListener("submit", async (e) => {
         e.preventDefault();
         const knop = document.getElementById("aiknop");
         const vak2 = document.getElementById("aiuitslag");
+        const aan = [...form.querySelectorAll(".ai_aan")];
+        const vragen = [...form.querySelectorAll(".ai_vraag")].map((v, i) => aan[i].checked ? v.value.trim() : "").filter(Boolean);
+        if (!vragen.length) { vak2.innerHTML = `<div class="melding fout" style="margin-top:14px">Vul minstens één vraag in.</div>`; return; }
         knop.disabled = true;
-        vak2.innerHTML = `<div class="laden" style="margin-top:14px"><div class="draai"></div>ChatGPT, Gemini en Claude zoeken het nu voor je uit…</div>`;
+        vak2.innerHTML = `<div class="laden" style="margin-top:14px"><div class="draai"></div>De AI's zoeken het nu voor je uit (${vragen.length} ${vragen.length === 1 ? "vraag" : "vragen"})…</div>`;
         try {
           const r = await fetch(WORKER_URL + "/ai-check", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              naam: document.getElementById("ai_naam").value,
-              branche: document.getElementById("ai_branche").value,
-              plaats: document.getElementById("ai_plaats").value,
-              website: d.website,
-            }),
+            body: JSON.stringify({ naam: document.getElementById("ai_naam").value, website: d.website, plaats: d.plaats || "", vragen }),
           });
           const a = await r.json();
           if (!r.ok) throw new Error(a.fout || "De AI-check lukte niet.");
           vak2.innerHTML = aiUitslagHtml(a);
-          laatsteAiDetail = a.resultaten;
-          laatsteAi = a.resultaten.map(x => `${x.naam}: ${x.status === "genoemd" ? "genoemd" : x.status === "niet_genoemd" ? "niet genoemd" : "onbekend"}`).join("; ");
+          laatsteAiDetail = a.vragen.map(q => ({ vraag: q.vraag, per: q.per }));
+          laatsteAi = a.totaal.filter(t => t.gecontroleerd).map(t => `${t.naam}: genoemd bij ${t.genoemd} van ${t.gecontroleerd}`).join("; ");
         } catch (err) {
           vak2.innerHTML = `<div class="melding fout" style="margin-top:14px">${esc(err.message)}</div>`;
         } finally {
@@ -323,48 +334,52 @@
 
     function aiUitslagHtml(a) {
       const UITSLAG = {
-        genoemd: ["✅", "Je wordt genoemd", "var(--accent)"],
-        niet_genoemd: ["❌", "Je wordt niet genoemd", "var(--rood)"],
-        onbekend: ["⚪", "Kon niet worden gecontroleerd", "var(--grijs)"],
+        genoemd: ["✅", "Genoemd", "var(--accent)"],
+        niet_genoemd: ["❌", "Niet genoemd", "var(--rood)"],
+        onbekend: ["⚪", "Niet gecontroleerd", "var(--grijs)"],
       };
-      const kaarten = a.resultaten.map(x => {
-        const [icoon, tekst, kleur] = UITSLAG[x.status] || UITSLAG.onbekend;
-        const lijst = (x.bedrijven || []).length
-          ? `<div class="klein">Aanbevolen:</div><ol>${x.bedrijven.map(b => `<li class="${b.jij ? "jij" : ""}">${esc(b.naam)}${b.jij ? " (jij)" : ""}</li>`).join("")}</ol>`
-          : (x.status === "onbekend" ? `<div class="klein">${esc(x.reden || "")}</div>` : `<div class="klein">Geen bedrijven genoemd.</div>`);
-        return `<div class="ai-kaart"><div class="kop">${esc(x.naam)}</div>
-          <div class="uitslag" style="color:${kleur}">${icoon} ${tekst}</div>${lijst}</div>`;
+      // AI's die nog niet zijn aangesloten laten we weg; onderaan staat welke dat zijn.
+      const nietAan = new Set(a.vragen[0].per.filter(x => x.reden === "Nog niet aangesloten.").map(x => x.naam));
+      const blokken = a.vragen.map(q => {
+        const kaarten = q.per.filter(x => !nietAan.has(x.naam)).map(x => {
+          const [icoon, tekst, kleur] = UITSLAG[x.status] || UITSLAG.onbekend;
+          const lijst = (x.bedrijven || []).length
+            ? `<ol>${x.bedrijven.map(b => `<li class="${b.jij ? "jij" : ""}">${esc(b.naam)}${b.jij ? " (jij)" : ""}</li>`).join("")}</ol>`
+            : `<div class="klein">${esc(x.reden || "Geen bedrijven genoemd.")}</div>`;
+          return `<div class="ai-kaart"><div class="kop">${esc(x.naam)}</div>
+            <div class="uitslag" style="color:${kleur}">${icoon} ${tekst}</div>${lijst}</div>`;
+        }).join("");
+        return `<div class="ai-vraagblok"><div class="ai-vraag">“${esc(q.vraag)}”</div><div class="ai-raster" style="grid-template-columns:repeat(${Math.max(1, 3 - nietAan.size)},1fr)">${kaarten}</div></div>`;
       }).join("");
 
-      const gecontroleerd = a.resultaten.filter(x => x.status !== "onbekend");
-      const genoemd = gecontroleerd.filter(x => x.status === "genoemd").length;
-      const concurrenten = [...new Set(gecontroleerd.flatMap(x => (x.bedrijven || []).filter(b => !b.jij).map(b => b.naam)))].slice(0, 5);
+      // Samenvatting: per AI bij hoeveel vragen je genoemd wordt.
+      const t = a.totaal.filter(x => x.gecontroleerd);
+      const concurrenten = [...new Set(a.vragen.flatMap(q => q.per.flatMap(x => (x.bedrijven || []).filter(b => !b.jij).map(b => b.naam))))].slice(0, 5);
       let samenvatting = "";
-      const n = gecontroleerd.length;
-      const wie = n === 1 ? gecontroleerd[0].naam : `${n} AI-assistenten`;
-      const wel = concurrenten.length ? ` Wel genoemd: ${concurrenten.map(esc).join(", ")}.` : "";
-      if (n) {
-        if (genoemd === 0) {
-          samenvatting = `<div class="ai-samenvatting melding fout"><strong>${n === 1 ? `${esc(wie)} noemt jouw bedrijf niet.` : `Geen van de ${n} AI-assistenten noemt jouw bedrijf.`}</strong>${wel} Klanten die het aan AI vragen, krijgen hen te zien en niet jou.</div>`;
-        } else if (genoemd < n) {
-          samenvatting = `<div class="ai-samenvatting melding info"><strong>Je wordt door ${genoemd} van de ${n} AI-assistenten genoemd.</strong> Bij de andere ga je de klant mis.</div>`;
-        } else {
-          samenvatting = `<div class="ai-samenvatting melding goed"><strong>${n === 1 ? `${esc(wie)} noemt je bedrijf.` : `Alle ${n} AI-assistenten noemen je bedrijf.`}</strong> Mooi! Met de punten hieronder houd je die plek vast.</div>`;
-        }
+      if (t.length) {
+        const regels = t.map(x => `${esc(x.naam)} noemt je bij <strong>${x.genoemd} van de ${x.gecontroleerd}</strong> ${x.gecontroleerd === 1 ? "vraag" : "vragen"}`).join(" · ");
+        const nul = t.every(x => x.genoemd === 0), alles = t.every(x => x.genoemd === x.gecontroleerd);
+        const soort = nul ? "fout" : alles ? "goed" : "info";
+        const slot = nul
+          ? (concurrenten.length ? ` Wel genoemd: ${concurrenten.map(esc).join(", ")}. Klanten die het aan AI vragen, krijgen hen te zien en niet jou.` : "")
+          : alles ? " Mooi! Met de verbeterpunten hieronder houd je die plek vast."
+          : " Bij de andere vragen gaat de klant naar een ander.";
+        samenvatting = `<div class="ai-samenvatting melding ${soort}">${regels}.${slot}</div>`;
       }
-      return `<div class="ai-raster">${kaarten}</div>${samenvatting}
-        <p class="klein">AI-antwoorden verschillen per keer en per persoon. Dit is een momentopname van ${esc(a.gecontroleerd_op)}, met zoeken op internet aan, zoals in de echte apps.</p>`;
+      return `${blokken}${samenvatting}
+        <p class="klein">AI-antwoorden verschillen per keer en per persoon. Dit is een momentopname van ${esc(a.gecontroleerd_op)}, met zoeken op internet aan, zoals in de echte apps.${nietAan.size ? ` Nog niet in deze check: ${[...nietAan].map(esc).join(" en ")}.` : ""}</p>`;
     }
 
     // Waarom dit loont: eerlijk, zonder garanties die niemand kan geven.
     function waardeHtml(d) {
       const b = (d.branche || "").trim(), p = (d.plaats || "").trim();
       const goed = /(bedrijf|kantoor|restaurant|café|cafe|bureau|atelier|centrum|hotel|instituut|huis)$/i.test(b) ? "goed" : "goede";
-      const vraag = b ? `"een ${goed} ${esc(b)}${p ? " in " + esc(p) : " in de buurt"}"` : "naar een bedrijf zoals het jouwe";
+      const vraag = d.markt === "landelijk" && (d.vragen || [])[0] ? `"${esc(d.vragen[0])}"`
+        : b ? `"een ${goed} ${esc(b)}${p ? " in " + esc(p) : " in de buurt"}"` : "naar een bedrijf zoals het jouwe";
       return `
         <div class="kaart waarde">
           <h3>Waarom dit loont</h3>
-          <p>Elke dag vragen mensen ChatGPT, Gemini en Claude om ${vraag}. Het antwoord gaat naar de bedrijven die AI het best begrijpt. Dat kan jij zijn.</p>
+          <p>Elke dag vragen mensen ChatGPT, Gemini en Claude ${d.markt === "landelijk" ? "dingen als" : "om"} ${vraag}. Het antwoord gaat naar de bedrijven die AI het best begrijpt. Dat kan jij zijn.</p>
           <ul>
             <li><strong>Eén keer goed regelen, daarna werkt het elke dag.</strong> Geen abonnement en geen advertentiebudget dat op raakt.</li>
             <li><strong>Hoe eerder, hoe beter.</strong> Nog maar weinig lokale bedrijven hebben dit op orde. Wie nu begint, staat voor.</li>
