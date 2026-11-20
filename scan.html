@@ -100,6 +100,18 @@
     .ai-samenvatting { margin-top: 16px; padding: 14px 16px; border-radius: 10px; }
     @media (max-width: 700px) { .aicheck .velden, .ai-raster { grid-template-columns: 1fr; } }
 
+    .themas { display: grid; gap: 12px; }
+    .thema { display: flex; gap: 14px; align-items: flex-start; padding: 16px; border-radius: 10px; border: 1px solid var(--rand); background: var(--achtergrond); }
+    .thema .stip { width: 14px; height: 14px; border-radius: 50%; margin-top: 6px; flex-shrink: 0; }
+    .thema h4 { color: var(--donker); font-size: 1.02rem; margin-bottom: 2px; }
+    .thema .label-st { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+    .thema p { font-size: 0.95rem; margin-top: 4px; }
+    .teaser { margin-top: 16px; padding: 16px 18px; border-radius: 10px; background: var(--donker); color: var(--wit); }
+    .teaser strong { color: #8ee0c0; }
+    .waarde h3 { color: var(--donker); font-size: 1.25rem; margin-bottom: 8px; }
+    .waarde ul { margin: 10px 0 0 20px; }
+    .waarde li { margin-bottom: 6px; }
+
     .uitleg { color: var(--grijs); font-size: 0.92rem; }
     .uitleg h3 { color: var(--donker); font-size: 1.05rem; margin-bottom: 6px; }
 
@@ -124,7 +136,7 @@
     <div class="container">
       <span class="label">Gratis · 15 seconden · Geen account nodig</span>
       <h1>Kan AI jouw website lezen?</h1>
-      <p class="sub">Steeds meer klanten vragen ChatGPT of Google Gemini om "een goede kapper in de buurt". Die AI-assistenten kunnen jou alleen aanbevelen als ze je website goed kunnen lezen. Deze scan controleert in 12 punten hoe goed dat lukt, en vraagt live aan ChatGPT, Gemini en Claude of ze jouw bedrijf aanraden.</p>
+      <p class="sub">Steeds meer klanten vragen ChatGPT of Google Gemini om "een goede kapper in de buurt". Die AI-assistenten kunnen jou alleen aanbevelen als ze je website goed kunnen lezen. Deze scan controleert hoe goed dat lukt, en vraagt live aan ChatGPT, Gemini en Claude of ze jouw bedrijf aanraden.</p>
 
       <form class="scanform" id="scanform">
         <input type="text" id="website" placeholder="jouwbedrijf.nl" autocomplete="url" inputmode="url" required>
@@ -139,7 +151,7 @@
   <section class="container" style="padding-bottom:56px">
     <div class="kaart uitleg">
       <h3>Wat controleert de scan wel en niet?</h3>
-      <p><strong>De websitescan</strong> kijkt in 12 punten of je website technisch goed leesbaar is voor AI-assistenten en zoekmachines: of ze toegang hebben, of je bedrijfsgegevens herkenbaar zijn, of je titel en omschrijving zeggen wat je doet en waar, en meer. Kon iets niet betrouwbaar gecontroleerd worden, dan zie je ⚪ en telt het niet mee in je score.</p>
+      <p><strong>De websitescan</strong> controleert in 16 punten of AI-assistenten en zoekmachines je website goed kunnen lezen, begrijpen en aan je plaats kunnen koppelen. We kijken daarbij naar je homepage en je contactpagina. Kon iets niet betrouwbaar gecontroleerd worden, dan telt het niet mee in je score.</p>
       <p style="margin-top:8px"><strong>De AI-check</strong> stelt ChatGPT, Google Gemini en Claude live de vraag die je klanten ook stellen, met zoeken op internet aan. Je ziet of je bedrijf genoemd wordt en welke bedrijven wel. AI-antwoorden verschillen per keer en per persoon, dus het is een momentopname.</p>
     </div>
   </section>
@@ -213,17 +225,20 @@
         return;
       }
       const [titel, uitleg] = oordeel(d.score);
-      const checks = d.checks.map(c => `
-        <div class="check">
-          <div class="icoon">${ICOON[c.status] || "⚪"}</div>
+      const KLEUR = { goed: "var(--accent)", matig: "#d97706", slecht: "var(--rood)", onbekend: "var(--grijs)" };
+      const LABEL = { goed: "In orde", matig: "Kan beter", slecht: "Probleem", onbekend: "Niet gecontroleerd" };
+      const themas = (d.themas || []).map(t => `
+        <div class="thema">
+          <div class="stip" style="background:${KLEUR[t.status]}"></div>
           <div>
-            <div class="naam">${esc(c.naam)} <span class="punten">${c.status === "onbekend" ? "niet meegeteld" : `${c.punten}/${c.maximum}`}</span></div>
-            ${c.tip ? `<div class="tip">${esc(c.tip)}</div>` : ""}
-            <details><summary>Wat zag de scan?</summary><p>${esc(c.bewijs)}</p></details>
+            <div class="label-st" style="color:${KLEUR[t.status]}">${LABEL[t.status]}</div>
+            <h4>${esc(t.titel)}</h4>
+            <p>${esc(t.zin)}</p>
           </div>
         </div>`).join("");
-      const onbekendNoot = d.aantal_onbekend
-        ? `<p class="klein">⚪ ${d.aantal_onbekend} onderdeel/onderdelen kon de scan niet betrouwbaar controleren. Die tellen niet mee in je score.</p>` : "";
+      const teaser = d.verbeterpunten
+        ? `<div class="teaser">We vonden <strong>${d.verbeterpunten} concrete verbeterpunten</strong> op je website. Welke dat zijn, wat ze je kosten en hoe ze worden opgelost, staat in je persoonlijke rapport.</div>`
+        : `<div class="teaser">We vonden <strong>geen grote verbeterpunten</strong>. Je website staat er goed voor.</div>`;
       vak.innerHTML = `
         <div class="kaart score-blok">
           <div class="score" style="background:${kleur(d.score)}">${d.score}<small>van 100</small></div>
@@ -231,7 +246,8 @@
             <p class="klein">${esc(d.website)} · gescand op ${esc(d.gecontroleerd_op)}</p></div>
         </div>
         ${aiCheckHtml(d)}
-        <div class="kaart">${checks}${onbekendNoot}</div>
+        <div class="kaart"><div class="themas">${themas}</div>${teaser}</div>
+        ${waardeHtml(d)}
         ${cadeauHtml(d)}
         ${aanvraagHtml(d)}`;
       koppelAiCheck(d);
@@ -240,7 +256,7 @@
     }
 
     // 🤖 Live AI-check: wordt dit bedrijf aanbevolen door ChatGPT, Gemini en Claude?
-    let laatsteAi = "";
+    let laatsteAi = "", laatsteAiDetail = null;
     function aiCheckHtml(d) {
       return `
         <div class="kaart aicheck" id="aicheck">
@@ -295,6 +311,7 @@
           const a = await r.json();
           if (!r.ok) throw new Error(a.fout || "De AI-check lukte niet.");
           vak2.innerHTML = aiUitslagHtml(a);
+          laatsteAiDetail = a.resultaten;
           laatsteAi = a.resultaten.map(x => `${x.naam}: ${x.status === "genoemd" ? "genoemd" : x.status === "niet_genoemd" ? "niet genoemd" : "onbekend"}`).join("; ");
         } catch (err) {
           vak2.innerHTML = `<div class="melding fout" style="margin-top:14px">${esc(err.message)}</div>`;
@@ -337,6 +354,24 @@
       }
       return `<div class="ai-raster">${kaarten}</div>${samenvatting}
         <p class="klein">AI-antwoorden verschillen per keer en per persoon. Dit is een momentopname van ${esc(a.gecontroleerd_op)}, met zoeken op internet aan, zoals in de echte apps.</p>`;
+    }
+
+    // Waarom dit loont: eerlijk, zonder garanties die niemand kan geven.
+    function waardeHtml(d) {
+      const b = (d.branche || "").trim(), p = (d.plaats || "").trim();
+      const goed = /(bedrijf|kantoor|restaurant|café|cafe|bureau|atelier|centrum|hotel|instituut|huis)$/i.test(b) ? "goed" : "goede";
+      const vraag = b ? `"een ${goed} ${esc(b)}${p ? " in " + esc(p) : " in de buurt"}"` : "naar een bedrijf zoals het jouwe";
+      return `
+        <div class="kaart waarde">
+          <h3>Waarom dit loont</h3>
+          <p>Elke dag vragen mensen ChatGPT, Gemini en Claude om ${vraag}. Het antwoord gaat naar de bedrijven die AI het best begrijpt. Dat kan jij zijn.</p>
+          <ul>
+            <li><strong>Eén keer goed regelen, daarna werkt het elke dag.</strong> Geen abonnement en geen advertentiebudget dat op raakt.</li>
+            <li><strong>Hoe eerder, hoe beter.</strong> Nog maar weinig lokale bedrijven hebben dit op orde. Wie nu begint, staat voor.</li>
+            <li><strong>Eén nieuwe vaste klant</strong> kan al meer opleveren dan wat het kost.</li>
+          </ul>
+          <p class="klein" style="margin-top:12px">Eerlijk is eerlijk: niemand kan beloven dat AI je altijd aanraadt. Wat wel kan: zorgen dat AI je goed kan vinden, begrijpen en vertrouwen. Dat is precies wat ik voor je regel.</p>
+        </div>`;
     }
 
     // 🎁 Het gratis cadeau: een persoonlijke llms.txt, gemaakt uit wat de scan vond.
@@ -412,6 +447,7 @@
               website: laatsteScan ? laatsteScan.website : document.getElementById("website").value,
               score: laatsteScan && !laatsteScan.geen_eigen_site ? laatsteScan.score : null,
               ai: laatsteAi,
+              ai_detail: laatsteAiDetail,
               toestemming: document.getElementById("toestemming").checked,
               extra_veld: document.getElementById("extra_veld").value,
             }),
